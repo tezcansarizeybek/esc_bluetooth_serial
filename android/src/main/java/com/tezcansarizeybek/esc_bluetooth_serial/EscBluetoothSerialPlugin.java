@@ -2,11 +2,32 @@ package com.tezcansarizeybek.esc_bluetooth_serial;
 
 import androidx.annotation.NonNull;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.util.Log;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.annotation.NonNull;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 
 /** EscBluetoothSerialPlugin */
 public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandler {
@@ -25,6 +46,7 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
 
   private int id = 0;
   private ThreadPool threadPool;
+  private BluetoothAdapter mBluetoothAdapter;
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
