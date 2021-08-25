@@ -30,6 +30,10 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 21
     }
+}
+
+dependencies {
+    implementation files('libs/gprintersdkv2.jar')
 }

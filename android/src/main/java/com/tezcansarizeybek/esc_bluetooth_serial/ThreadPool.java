@@ -6,7 +6,7 @@ import java.util.ArrayDeque;
 import java.util.concurrent.*;
 
 
-public classThreadPool {
+public class ThreadPool {
 
     private Runnable mActive;
 

@@ -43,6 +43,11 @@ class EscBluetoothSerial {
     _isScanning.add(false);
   }
 
+  Future<List<BluetoothDevice>> getBondedDevices() async {
+    final List list = await (_channel.invokeMethod('getBondedDevices'));
+    return list.map((map) => BluetoothDevice.fromJson(map)).toList();
+  }
+
   Future<dynamic> connect(BluetoothDevice device) => _channel.invokeMethod('connect', device.toJson());
 
   Future<dynamic> disconnect() => _channel.invokeMethod('disconnect');
