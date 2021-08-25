@@ -37,6 +37,7 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
   /// when the Flutter Engine is detached from the Activity
   private MethodChannel channel;
+  private ThreadPool threadPool;
 
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -46,7 +47,6 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
 
 
   private int id = 0;
-  private ThreadPool threadPool;
   private BluetoothAdapter mBluetoothAdapter;
 
   @Override
@@ -68,7 +68,6 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
                 .setMacAddress(address)
                 .build();
         // Open port
-        threadPool = ThreadPool.getInstantiation();
         threadPool.addSerialTask(new Runnable() {
           @Override
           public void run() {
@@ -83,16 +82,15 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
 
     }
     else if(call.method.equals("disconnect")){
-      return result.success(disconnect());
+      result.success(disconnect());
     }
     else if(call.method.equals("destroy")){
-      return result.success(destroy());
+      result.success(destroy());
     }
     else if(call.method.equals("writeData")){
       writeData(result, args);
     }
     else if(call.method.equals("getBondedDevices")){
-
         List<Map<String, Object>> devices = new ArrayList<>();
         for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
           Map<String, Object> ret = new HashMap<>();
@@ -101,7 +99,7 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
           ret.put("type", device.getType());
           devices.add(ret);
         }
-        return result.success(devices);
+        result.success(devices);
     }
     else {
       result.notImplemented();
@@ -125,10 +123,6 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
 
   private boolean destroy() {
     DeviceConnFactoryManager.closeAllPort();
-    if (threadPool != null) {
-      threadPool.stopThreadPool();
-    }
-
     return true;
   }
 
@@ -139,17 +133,14 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
       final ArrayList<Integer> bytes = (ArrayList<Integer>)args.get("bytes");
 
       threadPool = ThreadPool.getInstantiation();
-      threadPool.addSerialTask(new Runnable() {
-        @Override
-        public void run() {
-          Vector<Byte> vectorData = new Vector<>();
-          for(int i = 0; i < bytes.size(); ++i) {
-            Integer val = bytes.get(i);
-            vectorData.add(Byte.valueOf( Integer.toString(val > 127 ? val-256 : val ) ));
-          }
-
-          DeviceConnFactoryManager.getDeviceConnFactoryManagers()[id].sendDataImmediately(vectorData);
+      threadPool.addSerialTask(() -> {
+        Vector<Byte> vectorData = new Vector<>();
+        for(int i = 0; i < bytes.size(); ++i) {
+          Integer val = bytes.get(i);
+          vectorData.add(Byte.valueOf( Integer.toString(val > 127 ? val-256 : val ) ));
         }
+
+        DeviceConnFactoryManager.getDeviceConnFactoryManagers()[id].sendDataImmediately(vectorData);
       });
     } else {
       result.error("bytes_empty", "Bytes param is empty", null);

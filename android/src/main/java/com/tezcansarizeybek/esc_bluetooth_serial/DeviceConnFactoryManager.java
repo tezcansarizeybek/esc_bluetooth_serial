@@ -1,4 +1,4 @@
-package android.src.main.java.com.tezcansarizeybek.esc_bluetooth_serial;
+package com.tezcansarizeybek.esc_bluetooth_serial;
 
 import android.content.Context;
 import android.content.Intent;
