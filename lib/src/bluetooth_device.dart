@@ -6,7 +6,7 @@ class BluetoothDevice {
 
   BluetoothDevice({this.name, this.address, this.type, this.connected});
 
-  BluetoothDevice.fromJson(Map<String, dynamic> json) {
+  BluetoothDevice.fromJson(json) {
     name = json['name'];
     address = json['address'];
     type = json['type'];

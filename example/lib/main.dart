@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:esc_bluetooth_serial/esc_bluetooth_serial.dart';
 
 void main() {
@@ -16,7 +15,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  List _platformVersion = [];
+  List _devices = [];
 
   @override
   void initState() {
@@ -24,20 +23,14 @@ class _MyAppState extends State<MyApp> {
     initPlatformState();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
-    List platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    platformVersion = await EscBluetoothSerial.instance.getBondedDevices();
+    List devices;
+    devices = await EscBluetoothSerial.instance.getBondedDevices();
 
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
     if (!mounted) return;
 
     setState(() {
-      _platformVersion = platformVersion;
+      _devices = devices.map((e) => e.toJson()).toList();
     });
   }
 
@@ -49,7 +42,7 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+          child: Text('$_devices\n'),
         ),
       ),
     );
