@@ -109,20 +109,20 @@ class EscBluetoothSerial {
         .doOnDone(stopScan)
         .map((map) {
       final device = BluetoothDevice.fromJson(Map<String, dynamic>.from(map));
-      final List<BluetoothDevice> list = _scanResults.value;
+      final List<BluetoothDevice>? list = _scanResults.value;
       int newIndex = -1;
-      list.asMap().forEach((index, e) {
+      (list ?? []).asMap().forEach((index, e) {
         if (e.address == device.address) {
           newIndex = index;
         }
       });
 
       if (newIndex != -1) {
-        list[newIndex] = device;
+        list![newIndex] = device;
       } else {
-        list.add(device);
+        (list ?? []).add(device);
       }
-      _scanResults.add(list);
+      _scanResults.add(list!);
       return device;
     });
   }
