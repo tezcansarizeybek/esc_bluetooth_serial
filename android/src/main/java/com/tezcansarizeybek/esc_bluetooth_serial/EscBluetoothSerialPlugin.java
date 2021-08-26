@@ -11,17 +11,13 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.util.Log;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
-import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -37,21 +33,13 @@ import java.util.Vector;
 
 public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandler, RequestPermissionsResultListener {
   private MethodChannel channel;
-  private final Activity activity;
+  private final Activity activity = new Activity();
   private static final String TAG = "BluetoothBasicPlugin";
   private final int id = 0;
   private ThreadPool threadPool;
   private static final int REQUEST_COARSE_LOCATION_PERMISSIONS = 1451;
-  private static final String NAMESPACE = "flutter_bluetooth_basic";
 
-  private MethodCall pendingCall;
   private Result pendingResult;
-
-  public EscBluetoothSerialPlugin(Activity activity, EventChannel stateChannel, BluetoothManager mBluetoothManager) {
-    this.activity = activity;
-    this.stateChannel = stateChannel;
-    this.mBluetoothManager = mBluetoothManager;
-  }
 
 
   @Override
@@ -83,11 +71,10 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
                   activity,
                   new String[] {Manifest.permission.ACCESS_COARSE_LOCATION},
                   REQUEST_COARSE_LOCATION_PERMISSIONS);
-          pendingCall = call;
           pendingResult = result;
           break;
         }
-        startScan(call, result);
+        startScan(result);
         break;
       }
       case "getBondedDevices":
@@ -154,7 +141,7 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
 
   }
 
-  private void startScan(MethodCall call, Result result) {
+  private void startScan(Result result) {
     Log.d(TAG,"start scan ");
 
     try {
@@ -269,7 +256,7 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
 
     if (requestCode == REQUEST_COARSE_LOCATION_PERMISSIONS) {
       if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-        startScan(pendingCall, pendingResult);
+        startScan(pendingResult);
       } else {
         pendingResult.error("no_permissions", "This app requires location permissions for scanning", null);
         pendingResult = null;
@@ -281,17 +268,14 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
   }
 
 
-  private final EventChannel stateChannel;
-  private BluetoothManager mBluetoothManager;
   private BluetoothAdapter mBluetoothAdapter;
 
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
     channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "esc_bluetooth_serial");
-    this.mBluetoothManager = (BluetoothManager) flutterPluginBinding.getApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
+    BluetoothManager mBluetoothManager = (BluetoothManager) flutterPluginBinding.getApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
     this.mBluetoothAdapter = mBluetoothManager.getAdapter();
     channel.setMethodCallHandler(this);
-    stateChannel.setStreamHandler(stateStreamHandler);
   }
 
   @Override
@@ -300,42 +284,4 @@ public class EscBluetoothSerialPlugin implements FlutterPlugin, MethodCallHandle
   }
 
 
-
-  private final EventChannel.StreamHandler stateStreamHandler = new EventChannel.StreamHandler() {
-    private EventChannel.EventSink sink;
-
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
-        final String action = intent.getAction();
-        Log.d(TAG, "stateStreamHandler, current action: " + action);
-
-        if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
-          threadPool = null;
-          sink.success(intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1));
-        } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
-          sink.success(1);
-        } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
-          threadPool = null;
-          sink.success(0);
-        }
-      }
-    };
-
-    @Override
-    public void onListen(Object o, EventChannel.EventSink eventSink) {
-      sink = eventSink;
-      IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-      filter.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED);
-      filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
-      filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-      activity.registerReceiver(mReceiver, filter);
-    }
-
-    @Override
-    public void onCancel(Object o) {
-      sink = null;
-      activity.unregisterReceiver(mReceiver);
-    }
-  };
 }
