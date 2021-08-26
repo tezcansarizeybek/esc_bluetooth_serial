@@ -15,10 +15,10 @@ class BluetoothDevice {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
-    data['name'] = this.name;
-    data['address'] = this.address;
-    data['type'] = this.type;
-    data['connected'] = this.connected;
+    data['name'] = name;
+    data['address'] = address;
+    data['type'] = type;
+    data['connected'] = connected;
     return data;
   }
 }
